@@ -1,5 +1,20 @@
 #!/usr/bin/env ruby
 
+# osh is a command line ssh tunnel manager
+#
+#      ~/.osh/config 
+#      each line reads <shell name> <ssh options>
+#
+#      host1	-L 3380:localhost:3306 jzmbk@69.20.7.1
+#      gs_prod	-p 40782 -L 3399:localhost:3306 -R 6969:localhost:81 apps@example.com
+#      gs_qa 	-L 3370:127.0.0.1:3306 apps@qa.example.com
+#
+#      osh -o <shell name> => opens a tunnel
+#      osh -c <shell name> => close a tunnel
+#      osh -l              => list all tunnel status
+#
+
+
 require 'fileutils'
 
 
@@ -64,7 +79,7 @@ class Tube
   end
 
   def self.list()
-    puts "Tubes:"
+    puts "Tubes:  Name       SSH Options"
     self.each() do |t|
       status = t.is_open? ? 'O' : '_'
       
@@ -174,19 +189,22 @@ end
 
 case(@command)
   
-when '-u', 'start', '-o', 'open'
+when 'start', '-o', 'open'
   Tube[ARGV.shift].start
   
-when '-d', 'stop', '-c', 'close'
+when 'stop', '-c', 'close'
   Tube[ARGV.shift].stop
   
 when '-s', 'sh', 'shell'
   Tube[ARGV.shift].shell
   
-#when '-l','list'
+when '-l','list'
+  Tube.list
+  
 else
-    Tube.list
-    
+  Tube.list
+  puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) }"
+  
 end
 
 
