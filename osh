@@ -1,0 +1,195 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+
+###
+### => Config
+###
+
+OSHRoot = File.expand_path "~/.osh"
+ConfigFile  = "#{OSHRoot}/config"
+PidsDir     = "#{OSHRoot}/pids"
+
+
+
+
+###
+### => Tube 
+###
+
+class Tube
+  
+  @@all = {}
+  
+  attr :name
+  #attr :opts
+  #attr :tunnels
+  
+  def initialize(line)
+    #(@name, therest) = line.chomp.split(/\s+/,2)
+    args = line.chomp.split(/\s+/)
+    @name = args.shift
+    @opts = []
+    @tunnels = []
+    while !args.empty? do
+      a = args.shift
+      case a
+      when '-L', '-R'
+        @tunnels.push a
+        @tunnels.push args.shift
+      else
+        @opts.push a
+      end
+    end
+    #puts "new entry [#{@name}] -- #{opts()} -- #{tunnels()} !!"
+    
+    @@all[@name] = self    
+  end
+  
+  def opts()
+    @opts.join(' ')
+  end
+  
+  def tunnels()
+    @tunnels.join(' ')
+  end
+  
+  def self.each()
+    @@all.each_pair(){|k,v| yield(v)}
+  end
+  
+  def self.[](name)
+    @@all[name]
+  end
+
+  def self.list()
+    puts "Tubes:"
+    self.each() do |t|
+      status = t.is_open? ? 'O' : '_'
+      
+      sname = sprintf("%-10s", t.name)
+      stunnels = t.tunnels() #sprintf("%-16s", t.tunnels())
+      puts "    _#{status}_ #{sname} ( #{stunnels} ) #{t.opts()} - #{t.pid()} "
+    end
+    puts
+  end
+  
+  def is_open?()
+    pid = pid()
+    if !pid.nil?
+      begin
+        Process.kill(0,pid)
+        status = 'O'
+      rescue Exception=>e
+        pid = nil
+        clean()
+      end
+    end  
+    pid
+  end
+  
+  def start()
+    if pid()
+      puts "Tunnel #{@name} is already open"
+      return
+    end
+    
+    #pid = spawn(command, :out=>:err, :err=>:out)
+    pid = fork do 
+      exec("ssh -N #{tunnels()} #{opts()}") 
+      exit! 127 
+    end  
+    
+    puts "Started #{@name}"# pid #{pid} #{pidfile()}"
+    puts "    #{@opts}"
+    
+    File.open(pidfile(), 'w') do |file|
+      file.puts pid
+    end
+  end
+  
+  def stop()
+    pid = pid()
+    if pid
+      puts "Stopping #{@name} pid #{pid}"
+      Process.kill("HUP", pid)
+      clean()
+    else  
+      puts "#{@name} is not open"
+    end
+  end
+
+  def clean()
+    FileUtils.remove_file(pidfile())
+  end
+  
+  def pidfile()
+    "#{PidsDir}/#{@name}.pid"
+  end
+  
+  def pid()
+    begin
+      File.open(pidfile()) do |file|
+        pid = file.gets.chomp.to_i
+        return pid
+      end
+    rescue
+      return nil  
+    end
+  end
+  
+  def shell()
+    puts "Started shell to #{@name} [#{opts}]"# pid #{pid} #{pidfile()}"
+    exec("ssh #{opts()}") 
+    exit! 127 
+  end
+  
+end
+
+
+
+
+
+
+###
+### => Controller
+###
+
+@command = ARGV.shift
+
+FileUtils.makedirs OSHRoot if ! File.exists?(OSHRoot)
+FileUtils.makedirs PidsDir if ! File.exists?(PidsDir)
+
+
+
+File.open(ConfigFile) do |file|
+  file.each() do |l| 
+    next if l =~ /^#/
+    next if l =~ /^$/
+    Tube.new(l)
+  end
+end
+
+
+case(@command)
+  
+when '-u', 'start', '-o', 'open'
+  Tube[ARGV.shift].start
+  
+when '-d', 'stop', '-c', 'close'
+  Tube[ARGV.shift].stop
+  
+when '-s', 'sh', 'shell'
+  Tube[ARGV.shift].shell
+  
+#when '-l','list'
+else
+    Tube.list
+    
+end
+
+
+
+
+
