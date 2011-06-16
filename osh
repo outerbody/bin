@@ -53,6 +53,7 @@ class Tube
       when '-L', '-R'
         @tunnels.push a
         @tunnels.push args.shift
+      when '-N'
       else
         @opts.push a
       end
