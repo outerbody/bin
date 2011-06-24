@@ -28,6 +28,15 @@ PidsDir     = "#{OSHRoot}/pids"
 
 
 
+###
+### => Util
+###
+
+def highlight(text)
+  "\x1b[103;3m#{text}\x1b[0m"
+end
+
+
 
 ###
 ### => Tube 
@@ -35,7 +44,8 @@ PidsDir     = "#{OSHRoot}/pids"
 
 class Tube
   
-  @@all = {}
+  @@map = {}
+  @@all = []
   
   attr :name
   #attr :opts
@@ -60,7 +70,8 @@ class Tube
     end
     #puts "new entry [#{@name}] -- #{opts()} -- #{tunnels()} !!"
     
-    @@all[@name] = self    
+    @@map[@name] = self   
+    @@all << @name
   end
   
   def opts()
@@ -72,21 +83,31 @@ class Tube
   end
   
   def self.each()
-    @@all.each_pair(){|k,v| yield(v)}
+    #@@all.each_pair(){|k,v| yield(v)}
+    @@all.each(){|k| yield(@@map[k])}
   end
   
   def self.[](name)
-    @@all[name]
+    @@map[name]
   end
 
   def self.list()
     puts "Tubes:  Name       SSH Options"
     self.each() do |t|
-      status = t.is_open? ? 'O' : '_'
+      status = t.is_open? ? ' o ' : '   '
       
       sname = sprintf("%-10s", t.name)
-      stunnels = t.tunnels() #sprintf("%-16s", t.tunnels())
-      puts "    _#{status}_ #{sname} ( #{stunnels} ) #{t.opts()} - #{t.pid()} "
+      line = "    #{status} #{sname}"
+      
+      if !t.tunnels().empty?
+        stunnels = t.tunnels() #sprintf("%-16s", t.tunnels())
+        stunnels = highlight(stunnels) if t.is_open?
+        line +=  " ( #{stunnels} )"
+      end
+
+      line +=  " #{t.opts()} - #{t.pid()} "
+
+      puts line
     end
     puts
   end
@@ -193,22 +214,22 @@ case(@command)
 when 'start', '-o', 'open'
   Tube[ARGV.shift].start
   
-when 'stop', '-c', 'close'
+when 'stop', '-x', '-c', 'close'
   Tube[ARGV.shift].stop
   
 when '-s', 'sh', 'shell'
   Tube[ARGV.shift].shell
   
 when '-l','list'
-  Tube.list
+  #Tube.list
   
 else
-  Tube.list
   puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) }"
-  
+  puts
 end
 
 
+Tube.list
 
 
 
