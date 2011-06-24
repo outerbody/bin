@@ -84,7 +84,7 @@ class Tube
   
   def self.each()
     #@@all.each_pair(){|k,v| yield(v)}
-    @@all.each(){|k| yield(@@map[k])}
+    @@all.sort().each(){|k| yield(@@map[k])}
   end
   
   def self.[](name)
@@ -214,9 +214,13 @@ case(@command)
 when 'start', '-o', 'open'
   Tube[ARGV.shift].start
   
-when 'stop', '-x', '-c', 'close'
+when 'stop', '-c', 'close'
   Tube[ARGV.shift].stop
   
+when '-x'
+  Tube.each() do |tube|
+    tube.stop if tube.is_open?
+  end
 when '-s', 'sh', 'shell'
   Tube[ARGV.shift].shell
   
@@ -224,7 +228,11 @@ when '-l','list'
   #Tube.list
   
 else
-  puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) }"
+  sh = Tube[@command]
+  sh.shell if sh
+  
+  #else
+  puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | {-s|-shell} name }"
   puts
 end
 
