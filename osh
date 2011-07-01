@@ -88,7 +88,7 @@ class Tube
   end
   
   def self.[](name)
-    @@map[name]
+    @@map[name] || (puts "No shell named #{name} found in #{ConfigFile}"; exit -1)
   end
 
   def self.list()
@@ -228,8 +228,10 @@ when '-l','list'
   #Tube.list
   
 else
-  sh = Tube[@command]
-  sh.shell if sh
+  if @command
+    sh = Tube[@command]
+    sh.shell if sh
+  end
   
   #else
   puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | {-s|-shell} name }"
