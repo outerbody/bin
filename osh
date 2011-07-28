@@ -230,7 +230,8 @@ when '-l','list'
 else
   if @command
     sh = Tube[@command]
-    sh.shell if sh
+    #sh.shell if sh
+  	sh.start if sh
   end
   
   #else
