@@ -33,7 +33,8 @@ PidsDir     = "#{OSHRoot}/pids"
 ###
 
 def highlight(text)
-  "\x1b[103;3m#{text}\x1b[0m"
+  #"\x1b[103;3m#{text}\x1b[0m"
+  "\x1b[42;30m #{text} \x1b[0m"
 end
 
 
