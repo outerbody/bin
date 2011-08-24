@@ -194,51 +194,57 @@ end
 ### => Controller
 ###
 
-@command = ARGV.shift
 
-FileUtils.makedirs OSHRoot if ! File.exists?(OSHRoot)
-FileUtils.makedirs PidsDir if ! File.exists?(PidsDir)
-
+	FileUtils.makedirs OSHRoot if ! File.exists?(OSHRoot)
+	FileUtils.makedirs PidsDir if ! File.exists?(PidsDir)
 
 
-File.open(ConfigFile) do |file|
-  file.each() do |l| 
-    next if l =~ /^#/
-    next if l =~ /^$/
-    Tube.new(l)
-  end
-end
+	File.open(ConfigFile) do |file|
+		file.each() do |l| 
+			next if l =~ /^#/
+			next if l =~ /^$/
+			Tube.new(l)
+		end
+	end
 
 
-case(@command)
-  
-when 'start', '-o', 'open'
-  Tube[ARGV.shift].start
-  
-when 'stop', '-c', 'close'
-  Tube[ARGV.shift].stop
-  
-when '-x'
-  Tube.each() do |tube|
-    tube.stop if tube.is_open?
-  end
-when '-s', 'sh', 'shell'
-  Tube[ARGV.shift].shell
-  
-when '-l','list'
-  #Tube.list
-  
-else
-  if @command
-    sh = Tube[@command]
-    #sh.shell if sh
-  	sh.start if sh
-  end
-  
-  #else
-  puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | {-s|-shell} name }"
-  puts
-end
+### Read Opts
+
+while ! ARGV.empty?
+
+	command = ARGV.shift
+
+	case(command)
+		
+	when 'start', '-o', 'open'
+		Tube[ARGV.shift].start
+		
+	when 'stop', '-c', 'close'
+		Tube[ARGV.shift].stop
+		
+	when '-x'
+		Tube.each() do |tube|
+			tube.stop if tube.is_open?
+		end
+	when '-s', 'sh', 'shell'
+		Tube[ARGV.shift].shell
+		
+	when '-l','list'
+		#Tube.list
+		
+	else
+		if command
+			sh = Tube[command]
+			#sh.shell if sh
+			sh.start if sh
+		end
+		
+		#else
+		puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | {-s|-shell} name }"
+		puts
+	end
+
+end # command loop
 
 
 Tube.list
