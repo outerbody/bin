@@ -194,7 +194,6 @@ end
 ### => Controller
 ###
 
-
 	FileUtils.makedirs OSHRoot if ! File.exists?(OSHRoot)
 	FileUtils.makedirs PidsDir if ! File.exists?(PidsDir)
 
@@ -232,6 +231,9 @@ while ! ARGV.empty?
 	when '-l','list'
 		#Tube.list
 		
+  when '-e','edit'
+    exec("vi #{ConfigFile}")
+      
 	else
 		if command
 			sh = Tube[command]
@@ -245,7 +247,6 @@ while ! ARGV.empty?
 	end
 
 end # command loop
-
 
 Tube.list
 
