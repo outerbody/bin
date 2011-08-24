@@ -227,6 +227,9 @@ when '-s', 'sh', 'shell'
   
 when '-l','list'
   #Tube.list
+
+when '-e','edit'
+  exec("vi #{ConfigFile}")
   
 else
   if @command
