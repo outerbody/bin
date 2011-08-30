@@ -183,6 +183,13 @@ class Tube
     exit! 127 
   end
   
+	def scp(args)
+    cmd = "scp #{opts()}:#{args}" 
+    puts "> #{cmd}"
+    exec cmd
+    exit! 127 
+	end
+
 end
 
 
@@ -225,8 +232,12 @@ while ! ARGV.empty?
 		Tube.each() do |tube|
 			tube.stop if tube.is_open?
 		end
+
 	when '-s', 'sh', 'shell'
 		Tube[ARGV.shift].shell
+
+	when '-cp'
+		Tube[ARGV.shift].scp ARGV.join(' ')
 		
 	when '-l','list'
 		#Tube.list
@@ -242,7 +253,7 @@ while ! ARGV.empty?
 		end
 		
 		#else
-		puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | {-s|-shell} name }"
+		puts "usage: #{$0} { (-o|open) name | (-c|close) name | (-l|list) | -cp name from to | {-s|-shell} name }"
 		puts
 	end
 
